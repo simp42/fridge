@@ -2,24 +2,30 @@
 #include "User_Setup.h"
 
 #include "Thermistor.cpp"
-#include "../../../../Applications/Arduino.app/Contents/Java/hardware/tools/avr/lib/gcc/avr/5.4.0/include/stdint-gcc.h"
+
+#define USESERIAL true
 
 const uint8_t OUTPUT_PIN_TRANSISTOR = 9;
 const uint8_t INPUT_PIN_THERMISTOR = PIN_A2;
 const double DESIRED_TEMP_CELSIUS = 10;
-const uint8_t LOOPS_PER_MINUTE = 5;
-double currentFanSetting = 127;
-uint8_t loopsToReset;
+const int LOOPS_PER_MINUTE = 5;
+int currentFanSetting = 127;
 
-#define USESERIAL true
+const int BLINK_PATTERN_OVER_5 = 5;
+const int BLINK_PATTERN_UNDER_NEG_5 = 6;
+const int BLINK_PATTERN_OVER = 2;
+const int BLINK_PATTERN_UNDER = 3;
 
 Thermistor therm(INPUT_PIN_THERMISTOR, 5000, 3950);
 
+/**
+ * Set the Cooling FAN speed by adjusting the PWM width
+ * @param value
+ */
 void setFan(int value) {
     if (value >= 255) {
         analogWrite(OUTPUT_PIN_TRANSISTOR, 255);
-    }
-    else if (value <= 0) {
+    } else if (value <= 0) {
         analogWrite(OUTPUT_PIN_TRANSISTOR, 0);
     } else {
         analogWrite(OUTPUT_PIN_TRANSISTOR, value);
@@ -31,89 +37,69 @@ void setup() {
         Serial.begin(9600);
     }
 
-    //therm.setInputVoltage(4.5);
+    therm.setInputVoltage(4.5);
     therm.begin();
 
     pinMode(LED_BUILTIN, OUTPUT);
 
+    // Set PWM frequency to the slowest value possible to reduce noise
+    setPwmFrequency(OUTPUT_PIN_TRANSISTOR, 1024);
     setFan(currentFanSetting);
-    // Reset alle 10 Minuten
-    loopsToReset = LOOPS_PER_MINUTE * 10;
 }
 
 void loop() {
-    if (loopsToReset == 0) {
-        currentFanSetting = 127;
-        loopsToReset = LOOPS_PER_MINUTE * 10;
-    } else {
-        loopsToReset--;
+    if (USESERIAL) {
+        Serial.println("------------------------");
+        Serial.print("Bisherige FAN-Einstellung:");
+        Serial.println(currentFanSetting);
+    }
 
-        if (USESERIAL) {
-            Serial.println("------------------------");
-            Serial.print("Reset in:");
-            Serial.println(loopsToReset);
-            Serial.print("Bisherige FAN-Einstellung:");
-            Serial.println(currentFanSetting);
-        }
+    auto temp = therm.celsius();
 
-        auto temp = therm.celsius();
+    if (USESERIAL) {
+        Serial.print("Temperatur: ");
+        Serial.println(temp);
+    }
 
-        if (USESERIAL) {
-            Serial.print("Temperatur: ");
-            Serial.println(temp);
-        }
+    // Compute delta between actual temperature and desired state
+    auto deltaTemp = temp - DESIRED_TEMP_CELSIUS;
 
-        // TODO: Ordenltichen Algorithmus für Erreichen/Halten der Zieltemperatur
-        // Ableitung der bisherigen Verläufe regeln?
+    if (USESERIAL) {
+        Serial.print("Temperaturdifferenz:");
+        Serial.println(deltaTemp);
+    }
 
-        auto deltaTemp = temp - DESIRED_TEMP_CELSIUS;
+    auto timeSkipped = 0;
 
-        if (USESERIAL) {
-            Serial.print("Temperaturdifferenz:");
-            Serial.println(deltaTemp);
-        }
-
-        auto blinks = 3;
-        if (deltaTemp < 0) {
-            blinks = 2;
-        } else {
-            blinks = 5;
-        }
-
-        for (auto i = 0; i < blinks; i++) {
-            digitalWrite(LED_BUILTIN, HIGH);
-            delay(100);
-            digitalWrite(LED_BUILTIN, LOW);
-            delay(100);
-        }
-
-        // Positiv wenn über Zieltemperatur, sonst negativ
-        // d.h. wir stellen vorerst einfach die Fan-EInstellung um das Delta um, soweit es geht
-        currentFanSetting += deltaTemp;
-
-        if (currentFanSetting < 0) {
-            currentFanSetting = 0;
-        }
+    if (deltaTemp > 5) {
+        // Severely over the desired temperature, go 100% cooling
+        currentFanSetting = 255;
+        timeSkipped += blinkInternalLed(BLINK_PATTERN_OVER_5);
+    }
+    else if (deltaTemp < -5) {
+        // Severly under the desired temperature
+        currentFanSetting = 0;
+        timeSkipped += blinkInternalLed(BLINK_PATTERN_UNDER_NEG_5);
+    } else if (deltaTemp > 0) {
+        currentFanSetting += 10;
         if (currentFanSetting > 255) {
             currentFanSetting = 255;
         }
-
-        if (deltaTemp > 5) {
-            currentFanSetting = 255;
-        }
-        if (deltaTemp < 5) {
+        timeSkipped += blinkInternalLed(BLINK_PATTERN_OVER);
+    } else {
+        currentFanSetting -= 10;
+        if (currentFanSetting < 0) {
             currentFanSetting = 0;
         }
+        timeSkipped += blinkInternalLed(BLINK_PATTERN_UNDER);
+    }
 
-        if (USESERIAL) {
-            Serial.print("Stelle FAN ein:");
-            Serial.println(currentFanSetting);
-        }
+    if (USESERIAL) {
+        Serial.print("Stelle FAN ein:");
+        Serial.println(currentFanSetting);
     }
 
     setFan(currentFanSetting);
 
-    // Für 20 Sekunden schlafen legen
-    delay(20000);
-
+    delay(static_cast<unsigned long>(1000 * (60 / LOOPS_PER_MINUTE) - timeSkipped));
 }
