@@ -5,11 +5,11 @@
 
 class Thermistor {
 public:
-    Thermistor(int analogPin, int maxResistance, int betaValue) {
+    Thermistor(int analogPin, double nominalResistance, double seriesResistance, double betaValue) {
         this->analogPin = analogPin;
-        this->maxResistance = maxResistance;
+        this->nominalResistance = nominalResistance;
+        this->seriesResistance = seriesResistance;
         this->betaValue = betaValue;
-        this->inputVoltage = 5.0;
         // Nenntemperatur in K
         this->defaultTemp = 273.15 + 25;
     }
@@ -17,15 +17,11 @@ public:
     void begin();
     double celsius();
 
-    void setInputVoltage(double voltage) {
-        this->inputVoltage = voltage;
-    }
-
 private:
-    double inputVoltage;
     int analogPin;
-    int betaValue;
-    int maxResistance;
+    double betaValue;
+    double nominalResistance;
+    double seriesResistance;
     double defaultTemp;
 
     double measureResistance();
