@@ -9,9 +9,9 @@
 int blinkInternalLed(int times) {
     for (auto i = 0; i < times; i++) {
         digitalWrite(LED_BUILTIN, HIGH);
-        delay(150);
+        delay(200);
         digitalWrite(LED_BUILTIN, LOW);
-        delay(100);
+        delay(200);
     }
 
     return times * 200;
