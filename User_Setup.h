@@ -1,0 +1,4 @@
+#ifdef _FRIDGE_USER_SETUP_H_
+#define _FRIDGE_USER_SETUP_H_
+
+#endif //_FRIDGE_USER_SETUP_H_
