@@ -1,6 +1,8 @@
 #ifndef _FRIDGE_USER_SETUP_H_
 #define _FRIDGE_USER_SETUP_H_
 
+#include <Arduino.h>
+
 /**
  * Blinks the internal LED the given number of times and returns the number of elapsed millis
  * @param times

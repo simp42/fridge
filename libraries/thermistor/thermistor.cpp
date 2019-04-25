@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "Thermistor.h"
+#include "thermistor.h"
 
 void Thermistor::begin() {
     pinMode(this->analogPin, INPUT);

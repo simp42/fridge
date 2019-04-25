@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "User_Setup.h"
 
-#include "Thermistor.cpp"
+#include "thermistor.h"
 
 #define USESERIAL false
 
