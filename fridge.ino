@@ -8,7 +8,7 @@
 const uint8_t OUTPUT_PIN_TRANSISTOR = 9;
 const uint8_t INPUT_PIN_THERMISTOR = PIN_A2;
 const double DESIRED_TEMP_CELSIUS = 10;
-const int LOOPS_PER_MINUTE = 3;
+const int LOOPS_PER_MINUTE = 2;
 
 const int BLINK_PATTERN_OVER_3 = 5;
 const int BLINK_PATTERN_UNDER_NEG_3 = 6;
@@ -18,7 +18,7 @@ const int BLINK_PATTERN_UNDER = 3;
 int currentFanSetting = 127;
 double previousDelta;
 
-Thermistor therm(INPUT_PIN_THERMISTOR, 5000, 7500, 3950);
+Thermistor therm(INPUT_PIN_THERMISTOR, 5000, 5000, 3950);
 
 /**
  * Set the Cooling FAN speed by adjusting the PWM width
@@ -62,8 +62,8 @@ void loop() {
     for(int i = 0; i < TEMP_MEASUREMENTS; i++) {
         double measurement = therm.celsius();
         sumTemps += measurement;
-        delay(200);
-        timeSkipped += 200;
+        delay(1000);
+        timeSkipped += 1000;
         if (USESERIAL) {
             Serial.print("... Messung: ");
             Serial.println(measurement);
@@ -72,12 +72,13 @@ void loop() {
     }
     auto temp = sumTemps / TEMP_MEASUREMENTS;
 
-    // Debug - blink current measured temperature
-    timeSkipped += blinkInternalLed(temp);
-    delay(1000);
-    timeSkipped += 1000;
-
-    if (USESERIAL) {
+    if (!USESERIAL) {
+        // Debug - blink current measured temperature
+        timeSkipped += blinkInternalLed(temp);
+        delay(1000);
+        timeSkipped += 1000;
+    }
+    else {
         Serial.print("Temperatur: ");
         Serial.println(temp);
     }
