@@ -108,4 +108,15 @@ void setPwmFrequency(int pin, int divisor) {
     }
 }
 
+byte CUSTOM_CHAR_DEGREE[8] = {
+        0b00000,
+        0b00100,
+        0b01010,
+        0b00100,
+        0b00000,
+        0b00000,
+        0b00000,
+        0b00000
+};
+
 #endif //_FRIDGE_USER_SETUP_H_
