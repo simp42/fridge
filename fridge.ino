@@ -45,7 +45,7 @@ auto plusButton = new PushButton{
                 updateLcd();
 
                 // Reset debounce state to allow for keeping the button pushed
-                button->resetDebounceDelay(750);
+                button->resetDebounceDelay(500);
             }
         }
 };
@@ -65,7 +65,7 @@ auto minusButton = new PushButton{
                 updateLcd();
 
                 // Reset debounce state to allow for keeping the button pushed
-                button->resetDebounceDelay(750);
+                button->resetDebounceDelay(500);
             }
         }
 };
@@ -128,6 +128,8 @@ void setup() {
     lcd.print("........");
 
     lcd.createChar(0, CUSTOM_CHAR_DEGREE);
+
+    millisForNextCheck = millis() + 1000;
 }
 
 void loop() {
@@ -184,24 +186,24 @@ void loop() {
             currentFanSetting = 0;
         } else if (deltaTemp > 0) {
             if (deltaTemp >= previousDelta) {
-                currentFanSetting += 10;
+                currentFanSetting += 5;
                 if (currentFanSetting > 255) {
                     currentFanSetting = 255;
                 }
             } else if (deltaTemp < 1) {
-                currentFanSetting -= 10;
+                currentFanSetting -= 5;
                 if (currentFanSetting < 0) {
                     currentFanSetting = 0;
                 }
             }
         } else {
             if (deltaTemp <= previousDelta) {
-                currentFanSetting -= 10;
+                currentFanSetting -= 5;
                 if (currentFanSetting < 0) {
                     currentFanSetting = 0;
                 }
             } else if (deltaTemp > 1) {
-                currentFanSetting += 10;
+                currentFanSetting += 5;
                 if (currentFanSetting > 255) {
                     currentFanSetting = 255;
                 }
